@@ -2,8 +2,8 @@
 #include <WebSocketsServer.h>
 
 // Replace with your network credentials
-const char *ssid = "TBE";
-const char *password = "Tbogdane2000";
+const char *ssid = "dlink-5390";
+const char *password = "buvme97574";
 
 // Create a WebSocket server object on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -66,6 +66,7 @@ void loop()
   {
     lastSend = now;
     count++;
+    Serial.println(count);
     String message = "count:" + String(count);
     webSocket.broadcastTXT(message.c_str());
   }
