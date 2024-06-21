@@ -24,13 +24,17 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
     break;
   }
   case WStype_TEXT:
-    Serial.printf("[%u] Received text: %s\n", num, payload);
+    // Serial.printf("[%u] Received text: %s\n", num, payload);
+    Serial.printf("%s", payload);
     webSocket.sendTXT(num, "Message received");
+
+    // Directly send the received JSON payload to the Arduino
+    String jsonString = String((char *)payload);
+    Serial.println("Sending JSON to Arduino: " + jsonString);
+    Serial.println(jsonString); // Sending JSON string to Arduino
     break;
   }
 }
-
-int count = 0;
 
 void setup()
 {
@@ -58,16 +62,12 @@ void setup()
 void loop()
 {
   webSocket.loop(); // Handle WebSocket events
-
-  // Send count to connected clients every 2 seconds
-  static unsigned long lastSend = 0;
-  unsigned long now = millis();
-  if (now - lastSend >= 2000)
+  // Check if there is data available from the Arduino
+  if (Serial.available() > 0)
   {
-    lastSend = now;
-    count++;
-    Serial.println(count);
-    String message = "count:" + String(count);
-    webSocket.broadcastTXT(message.c_str());
+    String recievedJSON = Serial.readStringUntil('\n');
+    delay(200); // Slight delay to ensure complete message is received
+    Serial.println("Received from Arduino: " + recievedJSON);
+    webSocket.broadcastTXT(recievedJSON.c_str());
   }
 }
