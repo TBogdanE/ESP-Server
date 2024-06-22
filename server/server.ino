@@ -30,7 +30,7 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
 
     // Directly send the received JSON payload to the Arduino
     String jsonString = String((char *)payload);
-    Serial.println("Sending JSON to Arduino: " + jsonString);
+    Serial.println("Sending JSON to Arduino: ");
     Serial.println(jsonString); // Sending JSON string to Arduino
     break;
   }
@@ -66,7 +66,6 @@ void loop()
   if (Serial.available() > 0)
   {
     String recievedJSON = Serial.readStringUntil('\n');
-    delay(200); // Slight delay to ensure complete message is received
     Serial.println("Received from Arduino: " + recievedJSON);
     webSocket.broadcastTXT(recievedJSON.c_str());
   }
