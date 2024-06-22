@@ -8,6 +8,9 @@ const char *password = "buvme97574";
 // Create a WebSocket server object on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
 
+bool waitForOK = false;
+String jsonData = "";
+
 // WebSocket event handler
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 {
@@ -28,10 +31,29 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
     Serial.printf("%s", payload);
     webSocket.sendTXT(num, "Message received");
 
-    // Directly send the received JSON payload to the Arduino
-    String jsonString = String((char *)payload);
-    Serial.println("Sending JSON to Arduino: ");
-    Serial.println(jsonString); // Sending JSON string to Arduino
+    // Store the received JSON data
+    jsonData = String((char *)payload);
+    Serial.println("Received JSON data: ");
+    Serial.println(jsonData);
+
+    // Send "newtask" command to Arduino until we receive an "ok" response
+    waitForOK = true;
+    while (waitForOK)
+    {
+      Serial.println("Sending newtask command to Arduino...");
+      Serial.println("NewTask");
+      // delay(1000);
+      if (Serial.available() > 0)
+      {
+        String response = Serial.readStringUntil('\n');
+        if (response == "CommandOK")
+        {
+          waitForOK = false;
+          Serial.println("Received OK from Arduino. Sending JSON data...");
+          Serial.println(jsonData);
+        }
+      }
+    }
     break;
   }
 }
