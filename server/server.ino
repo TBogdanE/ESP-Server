@@ -42,7 +42,7 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
     {
       Serial.println("Sending newtask command to Arduino...");
       Serial.println("NewTask");
-      // delay(1000);
+      delay(1000);
       if (Serial.available() > 0)
       {
         String response = Serial.readStringUntil('\n');
