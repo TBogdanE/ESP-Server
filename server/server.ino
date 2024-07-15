@@ -2,17 +2,17 @@
 #include <WebSocketsServer.h>
 #include <SoftwareSerial.h>
 
-// Replace with your network credentials
+// add here your network id and password
 const char *ssid = "dlink-5390";
 const char *password = "buvme97574";
 
-// Create a WebSocket server object on port 81
+// create a WebSocket server on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
 
 bool waitForOK = false;
 String jsonData = "";
 
-// WebSocket event handler
+// webSocket event handler
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 {
   switch (type)
@@ -27,17 +27,22 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
     webSocket.sendTXT(num, "Connected now");
     break;
   }
+  // recieve data from phone
   case WStype_TEXT:
-    // Serial.printf("[%u] Received text: %s\n", num, payload);
     Serial.printf("%s", payload);
+    // send to the phone confirmation
     webSocket.sendTXT(num, "Message received");
 
-    // Store the received JSON data
+    // store the received JSON data
     jsonData = String((char *)payload);
     Serial.println("Received JSON data: ");
     Serial.println(jsonData);
 
-    // Send "newtask" command to Arduino until we receive an "ok" response
+    // !!! we cannot send directly the command to arduino, when recieving data from the phone;
+    // we have to send it only when arduino is waiting for data on serial
+    // we implement a way, so, when we are receiving data from phone, we send 'NewTask' to arduino continously;
+    // when arduino reads from serial, checks if it's recieving 'NewTask', if yes, then it will stop it's loop, and send
+    // back to esp 'CommandOk'; after ESP recieves 'CommandOk', it will send the command from the phone, than, continues to wait for new data
     waitForOK = true;
     while (waitForOK)
     {
@@ -49,8 +54,10 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
         response.trim();
         if (response == "CommandOK")
         {
+          delay(500);
           waitForOK = false;
           Serial.println(jsonData);
+          delay(300);
         }
       }
     }
@@ -60,10 +67,10 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
 
 void setup()
 {
-  // Start the Serial communication to send messages to the computer
+  // start the Serial communication to send messages to the computer
   Serial.begin(9600);
 
-  // Connect to Wi-Fi
+  // connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -75,7 +82,7 @@ void setup()
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
-  // Start WebSocket server
+  // start WebSocket server
   webSocket.begin();
   webSocket.onEvent(handleWebSocketEvent);
   Serial.println("WebSocket server started");
@@ -83,8 +90,8 @@ void setup()
 
 void loop()
 {
-  webSocket.loop(); // Handle WebSocket events
-  // Check if there is data available from the Arduino
+  webSocket.loop(); // handle WebSocket events
+  // check if there is data available from the Arduino
   if (Serial.available() > 0)
   {
     String recievedJSON = Serial.readStringUntil('\n');
